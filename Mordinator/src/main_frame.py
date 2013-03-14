@@ -31,6 +31,7 @@ ID_NEW_DATASET = 1008
 ID_PREFERENCES = 1009
 ID_NEW_DB = 1010
 ID_ABOUT = 1011
+ID_PERMUTATION = 1012
 
 
 class OrdData():
@@ -66,18 +67,18 @@ class MordinatorFrame( wx.Frame):
         toolbar = self.CreateToolBar()
         tool_image_opendb = wx.Bitmap( "icon/newdataset.png", wx.BITMAP_TYPE_PNG )
         tool_image_analysis = wx.Bitmap( "icon/analyze.png", wx.BITMAP_TYPE_PNG )
-        #tool_image_CVA= wx.Bitmap( "icon/analyze.png", wx.BITMAP_TYPE_PNG )
+        tool_image_permutation= wx.Bitmap( "icon/analyze.png", wx.BITMAP_TYPE_PNG )
 
         toolbar.AddSimpleTool( ID_OPEN_FILE, tool_image_opendb, "Open File" )
         toolbar.AddSimpleTool( ID_ANALYSIS, tool_image_analysis, "Analyze" )
-        #toolbar.AddSimpleTool( ID_CVA, tool_image_CVA, "CVA" )
+        toolbar.AddSimpleTool( ID_PERMUTATION, tool_image_permutation, "Permutation" )
 
         toolbar.SetToolBitmapSize( wx.Size(32,32))
         toolbar.Realize()
 
         self.Bind( wx.EVT_TOOL, self.OnOpenFile, id=ID_OPEN_FILE)
         self.Bind( wx.EVT_TOOL, self.OnAnalysis, id=ID_ANALYSIS )
-        #self.Bind( wx.EVT_TOOL, self.CVADialog, id=ID_CVA )
+        self.Bind( wx.EVT_TOOL, self.OnPermutation, id=ID_PERMUTATION )
         
         ''' Splitter '''
         self.vsplit= wx.SplitterWindow( self, -1, style= wx.SP_BORDER )
@@ -264,6 +265,7 @@ class MordinatorFrame( wx.Frame):
         return True
 
     def OnAnalysis(self, event ):
+        #print "analysis"
         dlg1 = AnalysisConfigDialog( self )
         dlg1.SetDataset( self.dataset )
         rv = dlg1.ShowModal()
@@ -288,7 +290,104 @@ class MordinatorFrame( wx.Frame):
         self.analysis_frame.Analyze()
         self.analysis_frame.Show()
 
+    def OnPermutation(self, event ):
+        #print "permutation"
+        dlg1 = AnalysisConfigDialog( self )
+        dlg1.SetDataset( self.dataset )
+        rv = dlg1.ShowModal()
+        if rv == wx.ID_OK:
+            self.analysis_config = dlg1.analysis_config
+            #print self.analysis_config
+            dlg1.Destroy()
+        else:
+            dlg1.Destroy()
+            return
+        #print "hello"
+        filter_by = self.analysis_config['filter_by']
+        group_by = self.analysis_config['group_by']
 
+        data = []
+        category_data = []
+        for obj in self.dataset['data']:
+            if obj.category_data[filter_by] in self.analysis_config['include']:
+                data.append( [ float( x ) for x in obj.data ] )
+                category_data.append( obj.category_data[group_by] )
+
+        category_set = list( set( category_data ) )
+        #print category_set
+        num_category = len( list( category_set ) )
+        #print num_category
+        for i in range( num_category - 1 ):
+            for j in range( i+1, num_category ):
+                #print i, j, category_set[i], category_set[j]
+                self.PermutationTest( data, category_data, category_set[i], category_set[j] )
+
+    
+    def GetAverage(self, data):
+        len_vector = len( data[0] )
+        sum1 = [ 0.0 for x in range( len_vector ) ]
+        avg1 = [ 0.0 for x in range( len_vector ) ]
+        for i in range( len( data ) ):
+            for j in range( len_vector ):
+                sum1[j] += data[i][j]
+        for j in range( len_vector ):
+            avg1[j] = sum1[j] / float( len( data ) )
+        return avg1
+    
+    def PermutationTest(self, data, cat_data, cat1, cat2 ):
+        print "permute", cat1, cat2
+        num_data = len( data )
+        len_vector = len( data[0] )
+        permutation_count = 10000
+        '''calculate multivar average'''
+        data1 = []
+        data2 = []
+        mixed_data = []
+        for i in range( num_data ):
+            if cat_data[i] == cat1:
+                data1.append( data[i] )
+                mixed_data.append( data[i] )
+            elif cat_data[i] == cat2:
+                data2.append( data[i] )
+                mixed_data.append( data[i] )
+        num_cat1 = len( data1 )
+        num_cat2 = len( data2 )
+        avg1 = self.GetAverage( data1 )
+        avg2 = self.GetAverage( data2 )
+        import math
+        import random
+        '''get euclidean distance'''
+        base_euc_dist = 0.0
+        for j in range( len_vector ):
+            base_euc_dist += ( avg1[j] - avg2[j] ) ** 2
+        base_euc_dist = math.sqrt( base_euc_dist )
+        
+        
+        '''loop 1000 times'''
+        dist_list = []
+        for lp in range( permutation_count ):
+            '''    permute and group'''
+            random.shuffle( mixed_data )
+            group1 = mixed_data[:num_cat1]
+            group2 = mixed_data[num_cat1:]
+            '''    get euclidean distance again'''
+            avg1 = self.GetAverage( group1 )
+            avg2 = self.GetAverage( group2 )
+            euc_dist = 0.0
+            for j in range( len_vector ):
+                euc_dist += ( avg1[j] - avg2[j] ) ** 2
+            euc_dist = math.sqrt( euc_dist )
+            dist_list.append( euc_dist )
+        dist_list.sort()
+        larger_dist_count = 0
+        for dist in dist_list:
+            if dist > base_euc_dist:
+                larger_dist_count += 1
+        percentage_larger_dist = float( larger_dist_count ) / float( len( dist_list ) )    
+        print "total", len( dist_list ), "permutation"
+        print int( percentage_larger_dist * 10000 ) / 100.0, "% of total cases yielded larger distance than the original one."
+        #print dist_list
+        #print base_euc_dist
     def OnResize(self,event):
         #self.objectList.OnResize()
         #event.Skip()

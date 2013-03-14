@@ -18,17 +18,27 @@ class FileOpenDialog( wx.Dialog ):
     def __init__(self,parent,id=-1):
         wx.Dialog.__init__(self,parent,id,'File Open', size = (640,480))
         self.panel = panel = wx.Panel( self, -1 )
-        
-        
-        import os.path
-        
         self.preference = {}
         pref_string = ''
         
+        import os
+        from appdirs import user_data_dir
+        appname = "Mordinator"
+        appauthor = "DiploSoft"
         
         homedir = os.path.expanduser("~")
+        #print homedir
+        homedir= user_data_dir( appname, appauthor )
+        #print homedir
+        #ho
+        try: 
+            os.makedirs(homedir)
+        except OSError:
+            if not os.path.isdir(homedir):
+                raise
+
         self.pref_filename =os.path.join( homedir, PREFERENCE_FILENAME)
-        
+
         if os.path.exists( self.pref_filename):
             fh = open( self.pref_filename, 'r')
             pref_string = fh.read()

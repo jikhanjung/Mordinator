@@ -12,7 +12,7 @@ class AnalysisConfigDialog( wx.Dialog ):
         self.panel = panel = wx.Panel( self, -1 )
     
         analysisLabel = wx.StaticText(panel, -1, 'Analysis', style=wx.ALIGN_RIGHT)
-        self.analysisRadio = wx.RadioBox( panel, ID_ANALYSIS_RADIO, "", choices=["PCA", "CVA"], style=wx.RA_HORIZONTAL)
+        self.analysisRadio = wx.RadioBox( panel, ID_ANALYSIS_RADIO, "", choices=["PCA", "CVA", "Permutation"], style=wx.RA_HORIZONTAL)
         
         categoryLabel = wx.StaticText( panel, -1, 'Group by', style=wx.ALIGN_CENTER )
         filterLabel = wx.StaticText( panel, -1, 'Filter by', style=wx.ALIGN_CENTER )

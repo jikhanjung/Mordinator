@@ -19,7 +19,7 @@ class MordinatorGUI(wx.App):
         self.SetTopWindow(self.frame)
         self.basepath = os.path.expanduser("~")
         
-        sys.stdout = open(os.path.join(self.basepath,"my_stdout.log"), "w")
+        sys.stdout = open(os.path.join(self.basepath,"my_stdout.log"), "w", 0)
         sys.stderr = open(os.path.join(self.basepath,"my_stderr.log"), "w")
         return True 
 
