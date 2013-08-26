@@ -67,7 +67,7 @@ class MordinatorFrame( wx.Frame):
         toolbar = self.CreateToolBar()
         tool_image_opendb = wx.Bitmap( "icon/newdataset.png", wx.BITMAP_TYPE_PNG )
         tool_image_analysis = wx.Bitmap( "icon/analyze.png", wx.BITMAP_TYPE_PNG )
-        tool_image_permutation= wx.Bitmap( "icon/analyze.png", wx.BITMAP_TYPE_PNG )
+        tool_image_permutation= wx.Bitmap( "icon/permute.png", wx.BITMAP_TYPE_PNG )
 
         toolbar.AddSimpleTool( ID_OPEN_FILE, tool_image_opendb, "Open File" )
         toolbar.AddSimpleTool( ID_ANALYSIS, tool_image_analysis, "Analyze" )

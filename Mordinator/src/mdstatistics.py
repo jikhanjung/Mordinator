@@ -205,19 +205,30 @@ class MdCanonicalVariate:
 
     def SetCategory(self, category_list ):
         self.category_list = category_list
+        
+    def SetRotationCategory(self, rotation_category_list ):
+        self.rotation_category_list = rotation_category_list
 
     def Analyze(self):
         '''analyze'''
-        actual_data = self.data
+        actual_data = []
+        actual_category_data = []
+        original_data = self.data[:] 
+        for i in range( self.nObservation ):
+            if self.category_list[i] in self.rotation_category_list:
+                actual_data.append( self.data[i] )
+                actual_category_data.append( self.category_list[i] )
+        
+        self.base_observation = len( actual_data )
         #actual_data = [ [] for y in range( self.nVariable ) ]
-        category_data = self.category_list
-        category_set = set( category_data )
+        #category_data = self.category_list
+        category_set = set( actual_category_data )
         num_category = len( category_set )
         
         variances = [0.0 for x in range( self.nVariable )]
         total_avg = [0.0 for x in range( self.nVariable )]
         total_sum = [0.0 for x in range( self.nVariable )]
-        total_count = self.nObservation
+        total_count = self.base_observation
 
         #print self.nObservation, self.nVariable
         #print category_data
@@ -235,7 +246,7 @@ class MdCanonicalVariate:
         #print "len category_data", len( category_data )
         for i in range( total_count ):
             #print i
-            k = category_data[i]
+            k = actual_category_data[i]
             count_by_category[k] += 1
             for j in range( self.nVariable ):
                 sum_by_category[k][j] += float( actual_data[i][j] )
@@ -252,7 +263,7 @@ class MdCanonicalVariate:
 
         ''' check zero variance variables '''
         for p in range( self.nVariable ):
-            for idx in range( self.nObservation ):
+            for idx in range( total_count ):
                 variances[p] += ( float( actual_data[idx][p] ) - total_avg[p] ) ** 2 
 
         covariance_matrix_size = 0
@@ -271,7 +282,7 @@ class MdCanonicalVariate:
             q_ = 0
             for q in range( self.nVariable ):
                 if variances[q] == 0: continue
-                for idx in range( self.nObservation ):
+                for idx in range( total_count ):
                     diff_p = float( actual_data[idx][p] ) - total_avg[p]
                     diff_q = float( actual_data[idx][q] ) - total_avg[q]
                     #print p_, q_
@@ -294,8 +305,8 @@ class MdCanonicalVariate:
             q_ = 0
             for q in range( self.nVariable ):
                 if variances[q] == 0: continue
-                for idx in range( self.nObservation ):
-                    key = category_data[idx]
+                for idx in range( total_count ):
+                    key = actual_category_data[idx]
                     diff_p = float( actual_data[idx][p] ) - avg_by_category[key][p]
                     diff_q = float( actual_data[idx][q] ) - avg_by_category[key][q]
                     within_cov[p_][q_] += diff_p * diff_q / ( total_count - len( category_set ) )
@@ -395,7 +406,7 @@ class MdCanonicalVariate:
         np_data = numpy.zeros( ( self.nObservation, self.nVariable ) )
         for p in range( self.nObservation ):
             for q in range( self.nVariable ):
-                np_data[p,q] = float( actual_data[p][q] )
+                np_data[p,q] = float( original_data[p][q] )
 
         '''
         log_str += "data:\n"
